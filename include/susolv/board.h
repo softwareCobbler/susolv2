@@ -92,9 +92,6 @@ public:
         return board;
     }
 
-    /**
-    * 1-indexed
-    */
     CellGroupIterator<CellGroupIteratorKind::row> rowBegin(uint8_t y) {
         return CellGroupIterator<CellGroupIteratorKind::row>(cells, y);
     }
@@ -103,9 +100,6 @@ public:
         return CellGroupIterator<CellGroupIteratorKind::row>::end();
     }
 
-    /**
-    * 1-indexed
-    */
     CellGroupIterator<CellGroupIteratorKind::col> colBegin(uint8_t x) {
         return CellGroupIterator<CellGroupIteratorKind::col>(cells, x);
     }
@@ -115,7 +109,7 @@ public:
     }
 
     /**
-    * 1-indexed
+    * 0-indexed
     * 
     *  0 | 1 | 2
     * ---+---+---
