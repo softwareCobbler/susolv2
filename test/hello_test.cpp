@@ -48,7 +48,7 @@ TEST(MainSuite, SomeOtherTest) {
 
     for (auto iter = board.possibleSolutionsBegin(result.bestIndex); iter != board.possibleSolutionsEnd(); ++iter, ++solutionIndex) {
         Board freshBoard = *iter;
-        EXPECT_EQ(freshBoard.isSolved(static_cast<uint8_t>(7)), true);
+        EXPECT_EQ(freshBoard.isSolved(7), true);
         EXPECT_EQ(freshBoard.getSolvedValue(static_cast<uint8_t>(7)), solvedForValues[solutionIndex]);
     }
 }
