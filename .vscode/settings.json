@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        ".cflintrc": "json",
+        "bit": "cpp"
+    }
+}
