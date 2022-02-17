@@ -96,7 +96,7 @@ public:
     * 1-indexed
     */
     CellGroupIterator<CellGroupIteratorKind::row> rowBegin(uint8_t y) {
-        return CellGroupIterator<CellGroupIteratorKind::row>(cells, y - 1);
+        return CellGroupIterator<CellGroupIteratorKind::row>(cells, y);
     }
 
     CellGroupIterator<CellGroupIteratorKind::row> rowEnd() {
@@ -107,7 +107,7 @@ public:
     * 1-indexed
     */
     CellGroupIterator<CellGroupIteratorKind::col> colBegin(uint8_t x) {
-        return CellGroupIterator<CellGroupIteratorKind::col>(cells, x - 1);
+        return CellGroupIterator<CellGroupIteratorKind::col>(cells, x);
     }
 
     CellGroupIterator<CellGroupIteratorKind::col> colEnd() {
@@ -117,15 +117,15 @@ public:
     /**
     * 1-indexed
     * 
-    *  1 | 2 | 3
+    *  0 | 1 | 2
     * ---+---+---
-    *  4 | 5 | 6
+    *  3 | 4 | 5
     * ---+---+---
-    *  7 | 8 | 9
+    *  6 | 7 | 8
     * 
     */
     CellGroupIterator<CellGroupIteratorKind::quad> quadBegin(uint8_t quad) {
-        return CellGroupIterator<CellGroupIteratorKind::quad>(cells, quad - 1);
+        return CellGroupIterator<CellGroupIteratorKind::quad>(cells, quad);
     }
 
     CellGroupIterator<CellGroupIteratorKind::quad> quadEnd() {
@@ -141,34 +141,34 @@ private:
     
 public:
     void fullComputeTakenVals() {
-        for (int rowIndex = 1; rowIndex <= 9; ++rowIndex) {
+        for (int rowIndex = 0; rowIndex < 9; ++rowIndex) {
             uint16_t taken = TAKEN_INIT;
             for (auto rowIter = rowBegin(rowIndex); rowIter != rowEnd(); ++rowIter) {
                 if (isSolved(*rowIter)) {
                     taken |= **rowIter & ALL_VALUES_MASK;
                 }
             }
-            takenValues.row[rowIndex - 1] = taken;
+            takenValues.row[rowIndex] = taken;
         }
 
-        for (int colIndex = 1; colIndex <= 9; ++colIndex) {
+        for (int colIndex = 0; colIndex < 9; ++colIndex) {
             uint16_t taken = TAKEN_INIT;
             for (auto colIter = colBegin(colIndex); colIter != colEnd(); ++colIter) {
                 if (isSolved(*colIter)) {
                     taken |= **colIter & ALL_VALUES_MASK;
                 }
             }
-            takenValues.col[colIndex - 1] = taken;
+            takenValues.col[colIndex] = taken;
         }
 
-        for (int quadIndex= 1; quadIndex <= 9; ++quadIndex) {
+        for (int quadIndex = 0; quadIndex < 9; ++quadIndex) {
             uint16_t taken = TAKEN_INIT;
             for (auto quadIter = quadBegin(quadIndex); quadIter != quadEnd(); ++quadIter) {
                 if (isSolved(*quadIter)) {
                     taken |= **quadIter & ALL_VALUES_MASK;
                 }
             }
-            takenValues.quad[quadIndex - 1] = taken;
+            takenValues.quad[quadIndex] = taken;
         }
     }
 
