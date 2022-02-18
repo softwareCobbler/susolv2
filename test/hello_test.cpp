@@ -52,3 +52,46 @@ TEST(MainSuite, SomeOtherTest) {
         EXPECT_EQ(freshBoard.getSolvedValue(static_cast<uint8_t>(7)), solvedForValues[solutionIndex]);
     }
 }
+
+TEST(MainSuite, Another) {
+    Board board;
+
+    const uint8_t input[9][9] = {
+        // best cell should be row-1 col-1, with possible values 7,8
+        {0, 0, 4, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 1, 0, 2, 0, 3},
+        {9, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 5, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 6, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    };
+
+    for (int y = 0; y < 9; ++y) {
+        for (int x = 0; x < 9; ++x) {
+            const auto val = input[y][x];
+            if (val == 0) {
+                board.setUnknown(cellIndexLookup.rowElementIndices[y][x]);
+            }
+            else {
+                board.setSolved(cellIndexLookup.rowElementIndices[y][x], val - 1);
+            }
+        }
+    }
+
+    Board::SimpleSolveResult result = board.simpleSolve();
+    const uint8_t expectedIndex = cellIndexLookup.rowElementIndices[1][1];
+
+    EXPECT_EQ(result.invalid, false);
+    EXPECT_EQ(result.solved, false);
+    EXPECT_EQ(result.bestIndex, expectedIndex);
+
+    auto iter = board.possibleSolutionsBegin(expectedIndex);
+    EXPECT_EQ((*iter).isSolved(expectedIndex), true);
+    EXPECT_EQ((*iter).getSolvedValue(expectedIndex), 7);
+    ++iter;
+    EXPECT_EQ((*iter).isSolved(expectedIndex), true);
+    EXPECT_EQ((*iter).getSolvedValue(expectedIndex), 8);
+}

@@ -2,6 +2,9 @@
 #define BOARD_H
 
 #include <cstdint>
+#include <iostream>
+#include <string>
+
 #include "susolv/cellIndexLookup.h"
 
 enum class CellGroupIteratorKind { row, col, quad, end_sentinel };
@@ -10,11 +13,11 @@ template<CellGroupIteratorKind kind>
 class CellGroupIterator {
 private:
 
-    uint16_t* board_cells;
+    uint16_t* const board_cells;
     const uint8_t base;
     uint8_t index = 0;
 
-    static const CellGroupIterator end_sentinel;
+    static const CellGroupIterator<kind> end_sentinel;
 
 public:
     CellGroupIterator() = delete;
@@ -65,7 +68,69 @@ CELL_GROUP_ITERATOR_STATIC_SENTINEL(end_sentinel);
 
 #undef CELL_GROUP_ITERATOR_STATIC_SENTINEL
 
+class Board;
+
+class PossibleSolutionIterator {
+private:
+    friend Board;
+
+    const Board* board_;
+    const uint8_t cellIndex_;
+    const uint16_t solutions_;
+    const uint8_t totalSolutions_;
+    uint8_t bitIndex_ = 0;
+
+    static constexpr uint8_t END = 0xFF;
+
+    bool someBitIsSet(uint8_t index) const {
+        return static_cast<bool>(solutions_ & (1 << index));
+    }
+
+    bool currentBitIsSet() const {
+        return someBitIsSet(bitIndex_);
+    }
+    
+    PossibleSolutionIterator() :
+        board_(nullptr),
+        cellIndex_(0),
+        solutions_(0),
+        totalSolutions_(0)
+    {
+        bitIndex_ = END;
+    }
+
+public:
+    PossibleSolutionIterator(const Board* board, uint8_t cellIndex);
+
+    bool operator==(const PossibleSolutionIterator& rhs) const {
+        return bitIndex_ == rhs.bitIndex_;
+    }
+
+    Board operator*();
+
+    PossibleSolutionIterator& operator++() {
+        if (bitIndex_ == END) {
+            return *this;
+        }
+
+        // bitIndex_ in range [0,8] for 9 possible values
+        while (++bitIndex_ < 9) {
+            if (currentBitIsSet()) {
+                break;
+            }
+        }
+
+        if (bitIndex_ == 9) {
+            bitIndex_ = END;
+        }
+
+        return *this;
+    }
+};
+
 class alignas(256) Board {
+    friend PossibleSolutionIterator;
+
 public:
 
     uint16_t cells[81];
@@ -83,6 +148,10 @@ public:
     static inline thread_local PossibleValues takenValues{};
 
     Board() = default;
+    Board(const Board& rhs) = default;
+    Board(Board&& rhs) = default;
+
+    friend std::ostream& operator<<(std::ostream& out, const Board& board);
 
     // generally don't need to pay for this at construction,
     // except maybe in a test
@@ -127,14 +196,14 @@ public:
     }
 
 private:
-    uint16_t unionTakenValues(uint8_t row, uint8_t col, uint8_t quad) const {
+    uint16_t unionTakenValues(uint8_t row, uint8_t col, uint8_t quad) const noexcept {
         return takenValues.row[row]
             | takenValues.col[col]
             | takenValues.quad[quad];
     }
     
 public:
-    void fullComputeTakenVals() {
+    void fullComputeTakenVals() noexcept {
         for (int rowIndex = 0; rowIndex < 9; ++rowIndex) {
             uint16_t taken = TAKEN_INIT;
             for (auto rowIter = rowBegin(rowIndex); rowIter != rowEnd(); ++rowIter) {
@@ -184,7 +253,7 @@ private:
     }
 
 public:
-    SimpleSolveResult simpleSolve() {
+    SimpleSolveResult simpleSolve() noexcept {
         uint8_t solvedCount;
         SimpleSolveResult result;
         bool didChange = false;
@@ -210,7 +279,7 @@ public:
                     return result;
                 }
                 else if (bitCount == 1) {
-                    setSolved(index, static_cast<uint8_t>(available));
+                    setSolved(index, std::countr_zero(available));
                     didChange = true;
                     goto retry;
                 }
@@ -246,7 +315,7 @@ public:
         setUnknown(&cells[cellIndex]);
     }
 
-    void setUnknown(uint16_t* cell) {
+    void setUnknown(uint16_t* cell) noexcept {
         *cell = ALL_VALUES_MASK;
     }
 
@@ -269,76 +338,7 @@ public:
 
 private:
 
-    class PossibleSolutionIterator {
-    private:
-        friend Board;
-
-        const Board* board_;
-        const uint8_t cellIndex_;
-        const uint16_t solutions_;
-        const uint8_t totalSolutions_;
-        uint8_t bitIndex_ = 0;
-
-        static constexpr uint8_t END = 0xFF;
-
-        bool someBitIsSet(uint8_t index) const {
-            return static_cast<bool>(solutions_ & (1 << bitIndex_));
-        }
-
-        bool currentBitIsSet() const {
-            return someBitIsSet(bitIndex_);
-        }
-    public:
-        PossibleSolutionIterator(const Board* board, uint8_t cellIndex) :
-            board_(board),
-            cellIndex_(cellIndex),
-            solutions_(board->availableValuesForCell(cellIndex)),
-            totalSolutions_(std::popcount(solutions_))
-        {
-            for (uint8_t i = 0; i < 9; ++i) {
-                if (someBitIsSet(i)) {
-                    bitIndex_ = i;
-                    return;
-                }
-            }
-            bitIndex_ = END; // no bits in solutions is set
-        }
-
-        bool operator==(const PossibleSolutionIterator& rhs) const {
-            return bitIndex_ == rhs.bitIndex_;
-        }
-
-        Board operator*() {
-            Board result = *board_;
-            result.setSolved(cellIndex_, bitIndex_);
-            return result;
-        }
-
-        PossibleSolutionIterator& operator++() {
-            if (bitIndex_ == END) {
-                return *this;
-            }
-
-            // bitIndex_ in range [0,8] for 9 possible values
-            while (++bitIndex_ < 9) {
-                if (currentBitIsSet()) {
-                    break;
-                }
-            }
-
-            if (bitIndex_ == 9) {
-                bitIndex_ = END;
-            }
-
-            return *this;
-        }
-    };
-
-    static inline const PossibleSolutionIterator solutionIteratorEnd = []() {
-        PossibleSolutionIterator solutionIterator(nullptr, 0);
-        solutionIterator.bitIndex_ = PossibleSolutionIterator::END;
-        return solutionIterator;
-    }();
+    static const inline PossibleSolutionIterator solutionIteratorEnd{};
 
 public:
 
@@ -354,4 +354,4 @@ public:
 static_assert(sizeof(Board) == 256, "Expected sizeof(Board) to be 256");
 static_assert(alignof(Board) == 256, "Expected alignof(Board) to be 256");
 
-#endif BOARD_H
+#endif // BOARD_H

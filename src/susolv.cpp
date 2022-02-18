@@ -1,5 +1,6 @@
 #include <iostream>
 #include <deque>
+#include <optional>
 #include "susolv/board.h"
 
 Board loadBoard(const char* fname) {
@@ -31,7 +32,7 @@ Board loadBoard(const char* fname) {
                 board.setUnknown(static_cast<uint8_t>(index));
             }
             else {
-                board.setSolved(static_cast<uint8_t>(index), value);
+                board.setSolved(static_cast<uint8_t>(index), value - 1);
             }
             ++index;
         }
@@ -43,36 +44,45 @@ Board loadBoard(const char* fname) {
     return board;
 };
 
-void solve(const Board& board) {
+std::optional<Board> solve(const Board& board) {
     std::deque<Board> boards{ board };
 
+    size_t maxSize = 0;
     while (boards.size() > 0) {
+        if (boards.size() > maxSize) maxSize = boards.size();
+
         Board& workingBoard = boards.front();
         Board::SimpleSolveResult result = workingBoard.simpleSolve();
 
         if (result.solved) {
             std::cout << "SOLVED" << std::endl;
+            std::cout << "max boards..." << maxSize << std::endl;
+            return {workingBoard};
         }
         else if (result.invalid) {
             boards.pop_front();
         }
         else {
             for (auto iter = workingBoard.possibleSolutionsBegin(result.bestIndex); iter != workingBoard.possibleSolutionsEnd(); ++iter) {
-                auto board = *iter;
-                boards.push_back(board);
+                boards.push_back(*iter);
             }
             boards.pop_front();
         }
     }
 
-    std::cout << "HM" << std::endl;
+    return {};
 }
 
 int main(int argc)
 {
     Board board = loadBoard("c:\\users\\anon\\dev\\rmme\\sudoku1.txt");
-    solve(board);
 
-    std::cout << "X" << std::endl;
+    std::optional<Board> maybeSolvedBoard = solve(board);
+    if (maybeSolvedBoard) {
+        std::cout << *maybeSolvedBoard << std::endl;
+    }
+    else {
+        std::cout << "No solution." << std::endl;
+    }
 }
 

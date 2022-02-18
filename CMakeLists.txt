@@ -13,7 +13,12 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-add_executable(susolv src/susolv.cpp include/susolv/cellIndexLookup.h include/susolv/board.h)
+add_executable(susolv
+  include/susolv/cellIndexLookup.h
+  include/susolv/board.h
+  src/susolv.cpp
+  src/board.cpp
+)
 target_include_directories(susolv PRIVATE ./include)
 
 
@@ -23,6 +28,7 @@ add_executable(
     hello_test
     test/hello_test.cpp
     include/susolv/board.h
+    src/board.cpp
 )
 
 target_include_directories(hello_test PRIVATE ./include)
