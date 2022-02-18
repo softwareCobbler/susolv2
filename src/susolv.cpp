@@ -8,8 +8,7 @@
 Board loadBoard(const char* fname) {
     Board board;
 
-    FILE* f;
-    fopen_s(&f, fname, "r");
+    FILE* f = fopen(fname, "r");
 
     if (f == NULL) {
         std::cout << "Can't open " << fname << std::endl;
@@ -25,7 +24,7 @@ Board loadBoard(const char* fname) {
                 c = fgetc(f);
             } while (c != '\n');
         }
-        else if (c == '\n') {
+        else if (c == '\n' || c == '\r') {
             continue;
         }
         else {
@@ -57,8 +56,8 @@ std::optional<Board> solve(const Board& board) {
         Board::SimpleSolveResult result = workingBoard.simpleSolve();
 
         if (result.solved) {
-            std::cout << "SOLVED" << std::endl;
-            std::cout << "max boards..." << maxSize << std::endl;
+            // std::cout << "SOLVED" << std::endl;
+            // std::cout << "max boards..." << maxSize << std::endl;
             return {workingBoard};
         }
         else if (result.invalid) {
@@ -75,20 +74,24 @@ std::optional<Board> solve(const Board& board) {
     return {};
 }
 
-int main(int argc)
+int main()
 {
-    Board board = loadBoard("c:\\users\\anon\\dev\\susolv\\boards\\euler96-29.txt");
-
-    auto start = std::chrono::high_resolution_clock::now();
-    std::optional<Board> maybeSolvedBoard = solve(board);
-    auto end = std::chrono::high_resolution_clock::now();
-    auto elapsed = end - start;
-    if (maybeSolvedBoard) {
-        std::cout << *maybeSolvedBoard << std::endl;
+    int i = 0;
+    while (i < 1000) {
+        Board board = loadBoard("/home/david/rmme/susolv2/boards/euler96-29.txt");
+        auto start = std::chrono::high_resolution_clock::now();
+        std::optional<Board> maybeSolvedBoard = solve(board);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto elapsed = end - start;
+        std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(elapsed).count() << "ns // " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count() << "ms\n";
+        ++i;
     }
-    else {
-        std::cout << "No solution." << std::endl;
-    }
-    std::cout << std::chrono::duration_cast<std::chrono::nanoseconds>(elapsed) << "ns // " << std::chrono::duration_cast<std::chrono::milliseconds>(elapsed) << "ms\n";
+    // if (maybeSolvedBoard) {
+    //     std::cout << *maybeSolvedBoard << std::endl;
+    // }
+    // else {
+    //     std::cout << "No solution." << std::endl;
+    // }
+    
 }
 

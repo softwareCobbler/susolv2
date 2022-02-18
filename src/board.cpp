@@ -7,17 +7,9 @@ PossibleSolutionIterator::PossibleSolutionIterator(const Board* board, uint8_t c
     board_(board),
     cellIndex_(cellIndex),
     solutions_(board->availableValuesForCell(cellIndex)),
-    totalSolutions_(std::popcount(solutions_))
-{
-    for (uint8_t i = 0; i < 9; ++i) {
-        // use countr_zero? in member initializer list?
-        if (someBitIsSet(i)) {
-            bitIndex_ = i;
-            return;
-        }
-    }
-    bitIndex_ = END; // no bits in solutions is set
-}
+    totalSolutions_(std::popcount(solutions_)),
+    bitIndex_(std::countr_zero(solutions_))
+{}
 
 Board PossibleSolutionIterator::operator*() {
     Board result = *board_;

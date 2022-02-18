@@ -1,6 +1,7 @@
 #ifndef BOARD_H
 #define BOARD_H
 
+#include <bit>
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -19,7 +20,7 @@ private:
 
     // default constructor is only used to init the "end sentinel" for each templated type
     CellGroupIterator() : board_cells(nullptr), base(0), index(9) {}
-    static const CellGroupIterator<kind> end_sentinel;
+    static inline const CellGroupIterator<kind> end_sentinel;
 
 public:
     CellGroupIterator(uint16_t* _board_cells, uint8_t _base) : board_cells(_board_cells), base(_base) {}
@@ -54,6 +55,7 @@ public:
 };
 
 #define CELL_GROUP_ITERATOR_STATIC_SENTINEL(which)                      \
+    template<>                                                          \
     const CellGroupIterator<CellGroupIteratorKind::which>               \
     CellGroupIterator<CellGroupIteratorKind::which>::end_sentinel{};
 
