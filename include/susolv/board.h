@@ -17,10 +17,11 @@ private:
     const uint8_t base;
     uint8_t index = 0;
 
+    // default constructor is only used to init the "end sentinel" for each templated type
+    CellGroupIterator() : board_cells(nullptr), base(0), index(9) {}
     static const CellGroupIterator<kind> end_sentinel;
 
 public:
-    CellGroupIterator() = delete;
     CellGroupIterator(uint16_t* _board_cells, uint8_t _base) : board_cells(_board_cells), base(_base) {}
 
     bool operator==(const CellGroupIterator& r) const {
@@ -52,14 +53,9 @@ public:
     }
 };
 
-#define CELL_GROUP_ITERATOR_STATIC_SENTINEL(which)                                 \
-    template<>                                                                     \
-    const CellGroupIterator<CellGroupIteratorKind::which>                          \
-    CellGroupIterator<CellGroupIteratorKind::which>::end_sentinel = []() {         \
-        auto result = CellGroupIterator<CellGroupIteratorKind::which>(nullptr, 0); \
-        result.index = 9;                                                          \
-        return result;                                                             \
-    }()
+#define CELL_GROUP_ITERATOR_STATIC_SENTINEL(which)                      \
+    const CellGroupIterator<CellGroupIteratorKind::which>               \
+    CellGroupIterator<CellGroupIteratorKind::which>::end_sentinel{};
 
 CELL_GROUP_ITERATOR_STATIC_SENTINEL(row);
 CELL_GROUP_ITERATOR_STATIC_SENTINEL(col);
