@@ -317,6 +317,7 @@ public:
                 }
                 else if (bitCount == 1) {
                     setSolved(index, std::countr_zero(availableBitFlags));
+                    fullComputeTakenVals();
                     didChange = true;
                 }
                 else if (bitCount < result.bitCount) {
