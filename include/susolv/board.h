@@ -153,10 +153,10 @@ public:
 
         void setSolved(uint8_t index) {
             if (index >= 64) {
-                b2 |= static_cast<uint64_t>(1) << static_cast<uint64_t>(index - 64);
+                b2 |= static_cast<B2>(1) << static_cast<B2>(index - 64);
             }
             else {
-                b1 |= static_cast<uint64_t>(1) << static_cast<uint64_t>(index);
+                b1 |= static_cast<B1>(1) << static_cast<B1>(index);
             }
         }
 
