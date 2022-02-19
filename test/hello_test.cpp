@@ -95,3 +95,37 @@ TEST(MainSuite, Another) {
     EXPECT_EQ((*iter).isSolved(expectedIndex), true);
     EXPECT_EQ((*iter).getSolvedValue(expectedIndex), 8);
 }
+
+TEST(MainSuite, ItSolvesABoardCorrectly) {
+    // fixme: get this path somehow from cmake ... ?
+    Board board = loadBoard("/home/david/rmme/susolv2/boards/euler96-29.txt");
+    std::optional<Board> maybeSolvedBoard = solve(board);
+
+    EXPECT_EQ(maybeSolvedBoard.has_value(), true);
+
+    std::map<int, int> solvedValues = {};
+
+    for (int i = 0; i < 81; ++i) {
+        int solvedValue = (*maybeSolvedBoard).getSolvedValue(i);
+        EXPECT_EQ(1 <= solvedValue && solvedValue <= 9, true);
+        solvedValues[solvedValue] += 1;
+    }
+
+    ASSERT_EQ(solvedValues.size(), 9);
+
+    for (int i = 1; i <= 9; ++i) {
+        EXPECT_EQ(solvedValues.contains(i), true);
+        EXPECT_EQ(solvedValues.at(i), 9);
+    }
+}
+
+int main(int argc, char **argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
+
+    for (int i = 1; i < argc; ++i) {
+        printf("arg %2d = %s\n", i, argv[i]);
+    }
+
+    return RUN_ALL_TESTS();
+}

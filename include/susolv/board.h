@@ -301,48 +301,34 @@ private:
 
 public:
     SimpleSolveResult simpleSolve() noexcept {
-        uint8_t solvedCount;
         SimpleSolveResult result;
-        bool didChange = false;
+        bool didChange;
 
         while (true) {
             fullComputeTakenVals();
 
-            solvedCount = 0;
             result = {};
+            didChange = false;
 
             int index = 0;
-            int xIndex = 0;
 
-            while(index < 81) {
-                if (index != xIndex) {
-                    std::cout << "index=" << index << ", xindex=" << xIndex << std::endl;
-                    std::terminate();
+            while(true) {
+                index = solvedIndices.nextUnsolvedOnOrAfter(index);
+                if (index >= 81) {
+                    break;
                 }
 
-                if (isSolved(index)) {
-                    xIndex = solvedIndices.nextUnsolvedOnOrAfter(xIndex);
-                    do {
-                        ++solvedCount;
-                        ++index;
-                    } while(index < 81 && isSolved(index));
-                    continue;
-                }
+                const uint16_t availableBitFlags = availableValuesForCell(index);
 
-                assert(index == xIndex);
-                const uint16_t available = availableValuesForCell(index);
-
-                const auto bitCount = std::popcount(available);
+                const auto bitCount = std::popcount(availableBitFlags);
 
                 if (bitCount == 0) {
                     result.invalid = true;
                     return result;
                 }
                 else if (bitCount == 1) {
-                    assert(index == xIndex);
-                    setSolved(index, std::countr_zero(available));
+                    setSolved(index, std::countr_zero(availableBitFlags));
                     didChange = true;
-                    goto retry;
                 }
                 else if (bitCount < result.bitCount) {
                     result.bestIndex = index;
@@ -350,19 +336,17 @@ public:
                 }
 
                 ++index;
-                ++xIndex;
             }
 
-            break;
-
-        retry:
-            continue;
+            if (!solvedIndices.boardIsFullySolved() && didChange) {
+                continue;
+            }
+            else {
+                break;
+            }
         }
 
-        if (solvedCount == 81) {
-            assert(solvedIndices.boardIsFullySolved());
-            result.solved = true;
-        }
+        result.solved = solvedIndices.boardIsFullySolved();
 
         return result;
     }
@@ -370,13 +354,7 @@ public:
     // bitIndex 0 will set the lsb, bitIndex the next, etc
     void setSolved(uint8_t cellIndex, uint8_t bitIndex) noexcept {
         solvedIndices.setSolved(cellIndex);
-        assert(solvedIndices.isSolved(cellIndex));
-
-        setSolved(&cells[cellIndex], bitIndex);
-    }
-
-    void setSolved(uint16_t* cell, uint8_t bitIndex) noexcept {
-        *cell = SOLVED_FLAG | (1 << bitIndex);
+        cells[cellIndex] = SOLVED_FLAG | (1 << bitIndex);
     }
 
     void setUnknown(uint8_t cellIndex) noexcept {
@@ -421,5 +399,8 @@ public:
 
 static_assert(sizeof(Board) == 256, "Expected sizeof(Board) to be 256");
 static_assert(alignof(Board) == 256, "Expected alignof(Board) to be 256");
+
+Board loadBoard(const char* fname);
+std::optional<Board> solve(const Board& board);
 
 #endif // BOARD_H
