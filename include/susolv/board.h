@@ -6,6 +6,7 @@
 #include <iostream>
 #include <optional>
 #include <string>
+#include <type_traits>
 
 #include "susolv/cellIndexLookup.h"
 
@@ -181,7 +182,7 @@ public:
 
     } solvedIndices;
 
-    static inline thread_local PossibleValues takenValues{};
+    PossibleValues takenValues{};
 
     Board() = default;
     Board(const Board& rhs) = default;
@@ -294,8 +295,6 @@ public:
         bool didChange;
 
         while (true) {
-            fullComputeTakenVals();
-
             result = {};
             didChange = false;
 
@@ -317,7 +316,6 @@ public:
                 }
                 else if (bitCount == 1) {
                     setSolved(index, std::countr_zero(availableBitFlags));
-                    fullComputeTakenVals();
                     didChange = true;
                 }
                 else if (bitCount < result.bitCount) {
@@ -344,6 +342,14 @@ public:
     // bitIndex 0 will set the lsb, bitIndex the next, etc
     void setSolved(uint8_t cellIndex, uint8_t bitIndex) noexcept {
         solvedIndices.setSolved(cellIndex);
+
+        auto row = cellIndexLookup.indexToRow[cellIndex];
+        auto col = cellIndexLookup.indexToCol[cellIndex];
+        auto quad = cellIndexLookup.indexToQuad[cellIndex];
+        takenValues.row[row] |= (1 << bitIndex);
+        takenValues.col[col] |= (1 << bitIndex);
+        takenValues.quad[quad] |= (1 << bitIndex);
+
         cells[cellIndex] = SOLVED_FLAG | (1 << bitIndex);
     }
 
@@ -389,6 +395,7 @@ public:
 
 static_assert(sizeof(Board) == 256, "Expected sizeof(Board) to be 256");
 static_assert(alignof(Board) == 256, "Expected alignof(Board) to be 256");
+static_assert(std::is_nothrow_move_constructible_v<Board>, "`Board` should be nothrow move constructible.");
 
 Board loadBoard(const char* fname);
 std::optional<Board> solve(const Board& board);

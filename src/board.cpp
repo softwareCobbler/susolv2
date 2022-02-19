@@ -92,6 +92,7 @@ Board loadBoard(const char* fname) {
 
 std::optional<Board> solve(const Board& board) {
     std::deque<Board> boards{ board };
+    boards.front().fullComputeTakenVals();
 
     size_t maxSize = 0;
     while (boards.size() > 0) {
