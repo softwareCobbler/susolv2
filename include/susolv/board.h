@@ -1,6 +1,7 @@
 #ifndef BOARD_H
 #define BOARD_H
 
+#include <assert.h>
 #include <bit>
 #include <cstdint>
 #include <iostream>
@@ -143,6 +144,54 @@ public:
         uint16_t quad[9];
     };
 
+    struct {
+        uint64_t b1 = 0;
+        uint32_t b2 = 0;
+
+        using B1 = decltype(b1);
+        using B2 = decltype(b2);
+
+        void setSolved(uint8_t index) {
+            if (index >= 64) {
+                b2 |= static_cast<uint64_t>(1) << static_cast<uint64_t>(index - 64);
+            }
+            else {
+                b1 |= static_cast<uint64_t>(1) << static_cast<uint64_t>(index);
+            }
+        }
+
+        bool isSolved(uint8_t index) {
+            if (index >= 64) {
+                return b2 & (static_cast<B2>(1) << static_cast<B2>(index - 64));
+            }
+            else {
+                return b1 & (static_cast<B1>(1) << static_cast<B1>(index));
+            }
+        }
+
+        uint8_t nextUnsolvedOnOrAfter(uint8_t index) const {
+            if (index >= 64) {
+                return index + std::countr_one(b2 >> (index - 64));
+            }
+            else {
+                auto result = index + std::countr_one(b1 >> index);
+                if (result == 64) {
+                    return nextUnsolvedOnOrAfter(64);
+                }
+                else {
+                    return result;
+                }
+            }
+        }
+
+        bool boardIsFullySolved() const {
+            // b1 is fully set (64 bits) and the bottom 17 bits of b2 are set
+            // 64 + 17 = 81
+            return b1 == 0xffff'ffff'ffff'ffff && b2 == 0x0001'ffff;
+        }
+
+    } solvedIndices;
+
     static inline thread_local PossibleValues takenValues{};
 
     Board() = default;
@@ -262,12 +311,25 @@ public:
             solvedCount = 0;
             result = {};
 
-            for (uint8_t index = 0; index < 81; ++index) {
+            int index = 0;
+            int xIndex = 0;
+
+            while(index < 81) {
+                if (index != xIndex) {
+                    std::cout << "index=" << index << ", xindex=" << xIndex << std::endl;
+                    std::terminate();
+                }
+
                 if (isSolved(index)) {
-                    ++solvedCount;
+                    xIndex = solvedIndices.nextUnsolvedOnOrAfter(xIndex);
+                    do {
+                        ++solvedCount;
+                        ++index;
+                    } while(index < 81 && isSolved(index));
                     continue;
                 }
 
+                assert(index == xIndex);
                 const uint16_t available = availableValuesForCell(index);
 
                 const auto bitCount = std::popcount(available);
@@ -277,6 +339,7 @@ public:
                     return result;
                 }
                 else if (bitCount == 1) {
+                    assert(index == xIndex);
                     setSolved(index, std::countr_zero(available));
                     didChange = true;
                     goto retry;
@@ -285,6 +348,9 @@ public:
                     result.bestIndex = index;
                     result.bitCount = bitCount;
                 }
+
+                ++index;
+                ++xIndex;
             }
 
             break;
@@ -294,6 +360,7 @@ public:
         }
 
         if (solvedCount == 81) {
+            assert(solvedIndices.boardIsFullySolved());
             result.solved = true;
         }
 
@@ -302,6 +369,9 @@ public:
 
     // bitIndex 0 will set the lsb, bitIndex the next, etc
     void setSolved(uint8_t cellIndex, uint8_t bitIndex) noexcept {
+        solvedIndices.setSolved(cellIndex);
+        assert(solvedIndices.isSolved(cellIndex));
+
         setSolved(&cells[cellIndex], bitIndex);
     }
 
