@@ -8,7 +8,7 @@ int main()
 {
     int i = 0;
     while (i < 1) {
-        Board board = loadBoard("/home/david/rmme/susolv2/boards/euler96-29.txt");
+        Board board = loadBoard("c:\\users\\anon\\dev\\susolv\\boards\\euler96-29.txt");
         auto start = std::chrono::high_resolution_clock::now();
         std::optional<Board> maybeSolvedBoard = solve(board);
         auto end = std::chrono::high_resolution_clock::now();

@@ -1,10 +1,10 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#include <assert.h>
 #include <bit>
 #include <cstdint>
 #include <iostream>
+#include <optional>
 #include <string>
 
 #include "susolv/cellIndexLookup.h"
@@ -19,9 +19,10 @@ private:
     const uint8_t base;
     uint8_t index = 0;
 
+    static const CellGroupIterator<kind> end_sentinel;
+
     // default constructor is only used to init the "end sentinel" for each templated type
     CellGroupIterator() : board_cells(nullptr), base(0), index(9) {}
-    static inline const CellGroupIterator<kind> end_sentinel;
 
 public:
     CellGroupIterator(uint16_t* _board_cells, uint8_t _base) : board_cells(_board_cells), base(_base) {}
@@ -54,18 +55,6 @@ public:
         return end_sentinel;
     }
 };
-
-#define CELL_GROUP_ITERATOR_STATIC_SENTINEL(which)                      \
-    template<>                                                          \
-    const CellGroupIterator<CellGroupIteratorKind::which>               \
-    CellGroupIterator<CellGroupIteratorKind::which>::end_sentinel{};
-
-CELL_GROUP_ITERATOR_STATIC_SENTINEL(row);
-CELL_GROUP_ITERATOR_STATIC_SENTINEL(col);
-CELL_GROUP_ITERATOR_STATIC_SENTINEL(quad);
-CELL_GROUP_ITERATOR_STATIC_SENTINEL(end_sentinel);
-
-#undef CELL_GROUP_ITERATOR_STATIC_SENTINEL
 
 class Board;
 

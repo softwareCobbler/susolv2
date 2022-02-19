@@ -98,7 +98,7 @@ TEST(MainSuite, Another) {
 
 TEST(MainSuite, ItSolvesABoardCorrectly) {
     // fixme: get this path somehow from cmake ... ?
-    Board board = loadBoard("/home/david/rmme/susolv2/boards/euler96-29.txt");
+    Board board = loadBoard("c:\\users\\anon\\dev\\susolv\\boards\\euler96-29.txt");
     std::optional<Board> maybeSolvedBoard = solve(board);
 
     EXPECT_EQ(maybeSolvedBoard.has_value(), true);
@@ -119,13 +119,9 @@ TEST(MainSuite, ItSolvesABoardCorrectly) {
     }
 }
 
+// I think this happens automatically but some light reading indicates this is the way to pull in command line args
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
-
-    for (int i = 1; i < argc; ++i) {
-        printf("arg %2d = %s\n", i, argv[i]);
-    }
-
     return RUN_ALL_TESTS();
 }

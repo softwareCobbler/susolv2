@@ -5,6 +5,18 @@
 
 #include "susolv/board.h"
 
+#define CELL_GROUP_ITERATOR_STATIC_SENTINEL(which)                      \
+    template<>                                                          \
+    const CellGroupIterator<CellGroupIteratorKind::which>               \
+    CellGroupIterator<CellGroupIteratorKind::which>::end_sentinel = {};
+
+CELL_GROUP_ITERATOR_STATIC_SENTINEL(row);
+CELL_GROUP_ITERATOR_STATIC_SENTINEL(col);
+CELL_GROUP_ITERATOR_STATIC_SENTINEL(quad);
+CELL_GROUP_ITERATOR_STATIC_SENTINEL(end_sentinel);
+
+#undef CELL_GROUP_ITERATOR_STATIC_SENTINEL
+
 PossibleSolutionIterator::PossibleSolutionIterator(const Board* board, uint8_t cellIndex) :
     board_(board),
     cellIndex_(cellIndex),
