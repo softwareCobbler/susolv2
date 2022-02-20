@@ -88,7 +88,7 @@ Board loadBoard(const char* fname) {
     fclose(f);
 
     return board;
-};
+}
 
 std::optional<Board> solve(const Board& board) {
     std::deque<Board> boards{ board };

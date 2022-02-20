@@ -16,8 +16,10 @@ FetchContent_MakeAvailable(googletest)
 add_executable(susolv
   include/susolv/cellIndexLookup.h
   include/susolv/board.h
+  include/susolv/euler96.h
   src/susolv.cpp
   src/board.cpp
+  src/euler96.cpp
 )
 target_include_directories(susolv PRIVATE ./include)
 
