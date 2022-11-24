@@ -22,7 +22,7 @@ PossibleSolutionIterator::PossibleSolutionIterator(const Board* board, uint8_t c
     cellIndex_(cellIndex),
     solutions_(board->availableValuesForCell(cellIndex)),
     totalSolutions_(std::popcount(solutions_)),
-    bitIndex_(std::countr_zero(solutions_))
+    bitIndex_(totalSolutions_ == 0 ? END : std::countr_zero(solutions_))
 {}
 
 Board PossibleSolutionIterator::operator*() {
@@ -111,11 +111,11 @@ std::optional<Board> solve(const Board& board) {
         }
         else {
             for (auto iter = workingBoard.possibleSolutionsBegin(result.bestIndex); iter != workingBoard.possibleSolutionsEnd(); ++iter) {
-                boards.push_back(*iter);
+                boards.emplace_back(std::move(*iter));
             }
             boards.pop_front();
         }
     }
 
-    return {};
+    return std::nullopt;
 }

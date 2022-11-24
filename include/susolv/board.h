@@ -7,6 +7,7 @@
 #include <optional>
 #include <string>
 #include <type_traits>
+#include <cassert>
 
 #include "susolv/cellIndexLookup.h"
 
@@ -117,6 +118,8 @@ public:
     }
 };
 
+// alignas prevents passing by value on msvc ("formal parameter with requested alignment of <alignment> won't be aligned")
+// (not that we need to pass these by value? maybe we want to move construct into function calls though?)
 class alignas(256) Board {
     friend PossibleSolutionIterator;
 
@@ -128,13 +131,18 @@ public:
     static constexpr uint16_t ALL_VALUES_MASK = 0b0000'0001'1111'1111;
     static constexpr uint16_t TAKEN_INIT      = 0b1111'1110'0000'0000;
 
+    // possible values per cell in each row/col/quad
+    // only relevant for unsolved cells
+    // e.g. row[1] = 13 = 0b0000'0000'0000'1101 = row[1] can assign 1 or 3 or 4 to some cell
     struct PossibleValues {
         uint16_t row[9];
         uint16_t col[9];
         uint16_t quad[9];
     };
 
-    struct {
+    // tracks the status of the 81 cells,
+    // where they are either solved or not solved
+    struct SolvedCellTracker {
         uint64_t b1 = 0;
         uint32_t b2 = 0;
 
@@ -190,12 +198,24 @@ public:
 
     friend std::ostream& operator<<(std::ostream& out, const Board& board);
 
-    // generally don't need to pay for this at construction,
-    // except maybe in a test
     static Board ZeroedBoard() {
         Board board;
         std::fill(board.cells, board.cells+81, 0);
         return board;
+    }
+
+    Board(uint8_t const (&cells_literal)[9][9]) {
+        for (int y = 0; y < 9; ++y) {
+            for (int x = 0; x < 9; ++x) {
+                const auto val = cells_literal[y][x];
+                if (val == 0) {
+                    setUnknown(cellIndexLookup.rowElementIndices[y][x]);
+                }
+                else {
+                    setSolved(cellIndexLookup.rowElementIndices[y][x], val - 1);
+                }
+            }
+        }
     }
 
     CellGroupIterator<CellGroupIteratorKind::row> rowBegin(uint8_t y) {
@@ -285,7 +305,7 @@ private:
         const uint8_t col = cellIndexLookup.indexToCol[index];
         const uint8_t quad = cellIndexLookup.indexToQuad[index];
         const uint16_t takenUnion = unionTakenValues(row, col, quad);
-        const uint16_t available = ~takenUnion;
+        const uint16_t available = ALL_VALUES_MASK & ~takenUnion;
         return available;
     }
 
@@ -315,7 +335,12 @@ public:
                     return result;
                 }
                 else if (bitCount == 1) {
-                    setSolved(index, std::countr_zero(availableBitFlags));
+                    auto bit_index = std::countr_zero(availableBitFlags);
+                    setSolved(index, bit_index);
+
+                    assert(0 <= bit_index && bit_index <= 8);
+                    assert(getSolvedValue(index) == bit_index + 1);
+
                     didChange = true;
                 }
                 else if (bitCount < result.bitCount) {

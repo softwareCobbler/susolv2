@@ -96,6 +96,62 @@ TEST(MainSuite, Another) {
     EXPECT_EQ((*iter).getSolvedValue(expectedIndex), 8);
 }
 
+TEST(MainSuite, IteratorSmokeTest) {
+    const uint8_t input[9][9] = {
+        {0, 3, 0, 0, 0, 0, 0, 0, 0},
+        {1, 2, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    };
+
+    Board b(input);
+
+    int total_iters = 0;
+    for (auto iter = b.possibleSolutionsBegin(0); iter != b.possibleSolutionsEnd(); ++iter) {
+        total_iters++;
+        Board with_solved_cell{std::move(*iter)};
+        EXPECT_EQ(with_solved_cell.isSolved(static_cast<uint8_t>(0)), true);
+        EXPECT_GE(with_solved_cell.getSolvedValue(static_cast<uint8_t>(0)), 1);
+        EXPECT_LE(with_solved_cell.getSolvedValue(static_cast<uint8_t>(0)), 9);
+        
+        EXPECT_NE(with_solved_cell.getSolvedValue(static_cast<uint8_t>(0)), 1);
+        EXPECT_NE(with_solved_cell.getSolvedValue(static_cast<uint8_t>(0)), 2);
+        EXPECT_NE(with_solved_cell.getSolvedValue(static_cast<uint8_t>(0)), 3);
+    }
+
+    EXPECT_EQ(total_iters, 6);
+}
+
+TEST(MainSuite, IteratorSmokeTest_NoSolutions) {
+    const uint8_t input[9][9] = {
+        {0, 1, 2, 3, 4, 5, 6, 7, 8},
+        {9, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    };
+
+    Board b(input);
+    b.fullComputeTakenVals();
+    b.simpleSolve();
+
+    int total_iters = 0;
+    for (auto iter = b.possibleSolutionsBegin(0); iter != b.possibleSolutionsEnd(); ++iter) {
+        total_iters++;
+    }
+
+    EXPECT_EQ(total_iters, 0);
+}
+
 TEST(MainSuite, ItSolvesABoardCorrectly) {
     // fixme: get this path somehow from cmake ... ?
     Board board = loadBoard("c:\\users\\anon\\dev\\susolv\\boards\\euler96-29.txt");
